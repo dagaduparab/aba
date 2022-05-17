@@ -1,0 +1,30 @@
+n=input('Total  number of buses')
+disp('Enter line impedance and line susceptance in following matrix format')
+z=input('Frb Tob Z B ')
+c=length(z(:,1));
+y=1./z(:,3);
+
+%initializing y bus to zero
+Y=zeros(n,n);
+
+%formation of offdiagonal elements
+for a=1:c
+    if z(a,1)>0 & z(a,2)>0
+        Y(z(a,1), z(a,2)) = Y(z(a,1), z(a,2)) - y(a);
+        Y(z(a,2), z(a,1)) = Y(z(a,1), z(a,2));
+        
+    end
+end
+
+%formation of diagonal elements
+for i=1:n
+    for a=1:c
+        if z(a,1)==i | z(a,2)==i
+           Y(i,i)=Y(i,i)+y(a)+i*z(a,4)/2;
+           
+        end
+     end
+ end
+%Display bus admittance matrix
+fprintf(' Y Bus = ')
+disp(Y)
