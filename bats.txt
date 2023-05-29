@@ -1,0 +1,110 @@
+////////////////////Distributed Sum////////////////////////////
+
+import mpi.*;
+
+public class DistributedSum {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		MPI.Init(args);
+		int rank = MPI.COMM_WORLD.Rank();
+		int size = MPI.COMM_WORLD.Size();
+		
+		int[] array = {1,2,3,4,5,6,7,8};
+		int n = array.length;
+		int localN = n/size;
+		int[] localArray = new int[localN];
+		int localSum = 0;
+		int totalSum = 0;
+		
+		MPI.COMM_WORLD.Scatter(array, 0, localN, MPI.INT, localArray, 0, localN, MPI.INT, 0);
+		
+		for(int i=0; i<localN; i++)
+		{
+			localSum += localArray[i];
+		}
+		
+		int[] globalSum = new int[1];
+		
+		MPI.COMM_WORLD.Reduce(new int[] {localSum}, 0, globalSum, 0, 1, MPI.INT, MPI.SUM, 0);
+		
+		System.out.println("Processor " +rank +" calculated sum= " +localSum);
+		
+		if(rank==0)
+		{
+			totalSum = globalSum[0];
+			System.out.println("Total Sum= " +totalSum);
+			
+		}
+		
+		MPI.Finalize();
+		
+	}
+}
+
+//////////////// Assignment 1////////////////////////
+/////circleInterface.java
+
+import java.rmi.*;
+public interface circleInterface extends Remote{
+	public double Area(int radius) throws RemoteException;
+	public double perimeter(int radius) throws RemoteException;
+}
+
+/////circleImpl.java
+
+import java.rmi.*;
+import java.rmi.server.*;
+public class circleImpl extends UnicastRemoteObject implements circleInterface{
+	public circleImpl() throws RemoteException {
+		super();
+	}
+	public double Area(int radius) throws RemoteException {
+		double pi=3.14;
+		return pi*radius*radius;
+	}
+	public double perimeter(int radius) throws RemoteException {
+		double pi=3.14;
+		return 2*pi*radius;
+	}
+}
+
+/////Server.java
+
+import java.rmi.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+public class Server{
+	public Server() throws RemoteException {
+		super();
+	}
+	
+	public static void main(String args[]) throws RemoteException {
+		Registry reg=LocateRegistry.createRegistry (101);
+		circleImpl ci=new circleImpl();
+		reg.rebind("circle", ci);
+		System.out.println("Server is waiting....");
+	}
+}
+
+/////Client.java
+
+import java.net.MalformedURLException;
+import java.rmi.*;
+import java.util.Scanner;
+public class Client{
+	public Client(){
+	}
+	public static void main(String args[]) throws RemoteException, MalformedURLException, NotBoundException{
+		int radius;
+		Scanner in = new Scanner(System.in);
+		System.out.println("Enter the radius of the circle");
+		radius=in.nextInt();
+		circleInterface c=(circleInterface) Naming.lookup("rmi://localhost:101/circle"); 
+		System.out.println("The area of the circle is "+c. Area(radius)); 
+		System.out.println("The perimeter of the circle is "+c.perimeter(radius));
+	}
+}
+
+
